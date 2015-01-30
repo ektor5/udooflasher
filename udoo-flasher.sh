@@ -28,6 +28,7 @@ error() {
   
   [[ -z $E_CODE ]] && E_CODE=1
   [[ -z $E_TEXT ]] || echo $E_TEXT
+
   exit $E_CODE
 }
 
@@ -39,7 +40,7 @@ ok() {
   exit 0
 }
 
-usage(){
+usage() {
 	echo "Usage: $0"
 	exit 1
 }
@@ -64,10 +65,14 @@ usage(){
 # fi
 
 
-IMG_PATH=/home/ektor-5/udoo/flasher/img
+
+IMG_PATH="img"
 
 if [ -n "$DISPLAY" ]
 then
+
+  ###### GRAPHICAL STYLE
+
   D=zenity
   
   error(){
@@ -101,9 +106,10 @@ then
   choosedisk(){
   while [ 1 ] 
   do
-    DISK=`for i in /dev/sd[b-z] ; do \
+    DISK=`for f in $(lsblk -dn -o NAME)  ; do \
+      i=/dev/$f
       echo 0 ; \
-      echo "$i"; \
+      echo "$i"; \:
       echo $(lsblk "$i" -nid -o NAME ); \
       echo \"$( lsblk "$i" -nid -o SIZE )\" ; \
       echo \"$( lsblk "$i" -nid -o VENDOR,MODEL )\" ; \
@@ -140,21 +146,24 @@ then
   
   chooseimg(){
     while [ 1 ] 
-  do
-    #FILENAME=`for i in $IMG_PATH/* ; do echo 0 "$i" ; done | xargs $D \
-		#    --title="$TITLE" \
-   FILENAME=`$D --file-selection \
-		    --width=400 \
-		    --height=300 \
+    do
+     #FILENAME=`for i in $IMG_PATH/* ; do echo 0 "$i" ; done | xargs $D \
+		 #    --title="$TITLE" \
+    FILENAME=`$D --file-selection \
+		      --width=400 \
+		      --height=300 \
 		    `
 		
     (( $? )) && exit 1
     
     [[ $FILENAME == "" ]] && continue
     
-    IMGSIZE=$(du -h $FILENAME | cut -f 1)
+    IMGSIZE=$(du -h "$FILENAME" | cut -f 1)
 
-    question "You picked $FILENAME ($IMGSIZE), you really want to flash it to $DISK_CHOOSED?"
+    question "You picked:
+$FILENAME ($IMGSIZE)
+
+Do you really want to flash it to $DISK_CHOOSED?"
 
     (( $? )) && continue
   
@@ -163,7 +172,19 @@ then
   done
 
   }
+  
+  flash() {
+    ( pv -n "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M status=none && echo "# Finished" ) 2>&1 | 
+      zenity --progress \
+    --title="Flasher" \
+    --text="Flashing $DISK_CHOOSED..." \
+    --percentage=0 \
+    --auto-kill
+  }
+
 else
+  ##### TERMINAL STYLE
+
   choosedisk(){
     echo "Choose a disk to flash"
     select DISK in /dev/sd[b-z] 
@@ -181,23 +202,31 @@ else
 	fi
     done
   }
+
   chooseimg(){
     echo "Choose an image from $IMG_PATH"
     select FILENAME in $IMG_PATH/*;
     do
-	IMGSIZE=$(du -h $FILENAME | cut -f 1  )
-	echo "You picked $FILENAME ($IMGSIZE), you really want to flash it to $DISK_CHOOSED? (y/n)"
-	read ANS 
-	if [[ $ANS == "y" ]]
-	then
-	    IMG_CHOOSED="$FILENAME"
-	    break
-	else
-	    return 1 
-	fi
+	    IMGSIZE=$( du -h $FILENAME | cut -f 1  )
+	    echo "You picked $FILENAME ($IMGSIZE), you really want to flash it to $DISK_CHOOSED? (y/n)"
+	    read ANS 
+	    if [[ $ANS == "y" ]]
+	    then
+	       IMG_CHOOSED="$FILENAME"
+	       break
+	    else
+	      return 1 
+	    fi
     done
   }
+
+  flash(){
+     pv "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M status=none && echo "Finished"  2>&1
+  }
+
 fi
+
+### MAIN
 
 if [[ $1 == "" ]]
 then 
@@ -207,9 +236,9 @@ else
   DISK_CHOOSED=$1
 fi
 
-if [ ! -e "$DISK_CHOOSED" ] 
+if [ ! -b "$DISK_CHOOSED" ] 
 then
-    error "Device $DISK_CHOOSED doesn't exist"
+    error "Device $DISK_CHOOSED doesn't exist or is invalid"
 fi
 
 shift
@@ -218,8 +247,13 @@ if [[ $1 == "" ]]
 then 
   chooseimg
   (( $? )) && error
-else 
-  IMG_CHOOSED=$1
+elif [ -d "$1" ]
+then
+  IMG_PATH="$1"
+  chooseimg
+  (( $? )) && error
+else
+   IMG_CHOOSED="$1"
 fi
 
 if [ ! -e "$IMG_CHOOSED" ] 
@@ -227,11 +261,6 @@ then
     error "Image $IMG_CHOOSED doesn't exist"
 fi
 
-IMGSIZE=$(du $IMG_CHOOSED | cut -f 1 )
+#IMGSIZE=$(du $IMG_CHOOSED | cut -f 1 )
 
-( pv -n "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M status=none && echo "Finished" ) 2>&1 | 
-zenity --progress \
-  --title="Flasher" \
-  --text="Flashing $DISK_CHOOSED..." \
-  --percentage=0 \
-  --auto-kill
+flash
