@@ -112,7 +112,7 @@ then
       echo "$i"; \:
       echo $(lsblk "$i" -nid -o NAME ); \
       echo \"$( lsblk "$i" -nid -o SIZE )\" ; \
-      echo \"$( lsblk "$i" -nid -o VENDOR,MODEL )\" ; \
+      echo \"$( lsblk "$i" -nid -o MODEL )\" ; \
     done | xargs $D \
 		    --title="$TITLE" \
 		    --width=500 \
