@@ -5,7 +5,7 @@ Homepage: http://www.udoo.org
 Standards-Version: 3.9.2
 
 Package: udoo-flasher
-Version: 0.1
+Version: 0.2
 Maintainer: Ettore Chimenti <ek5.chimenti@gmail.com>
 # Pre-Depends: <comma-separated list of packages>
 Depends: zenity, pv

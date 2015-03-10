@@ -41,7 +41,8 @@ ok() {
 }
 
 usage() {
-	echo "Usage: $0"
+  echo "UDOO Image Flasher"
+	echo "Usage: $0 [DISK] [IMAGE|IMAGEDIR] "
 	exit 1
 }
 
@@ -149,6 +150,8 @@ then
     do
      #FILENAME=`for i in $IMG_PATH/* ; do echo 0 "$i" ; done | xargs $D \
 		 #    --title="$TITLE" \
+   
+    #better use zenity
     FILENAME=`$D --file-selection \
 		      --width=400 \
 		      --height=300 \
@@ -173,8 +176,13 @@ Do you really want to flash it to $DISK_CHOOSED?"
 
   }
   
+
   flash() {
-    ( pv -n "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M status=none && echo "# Finished" ) 2>&1 | 
+    #using (pv | dd) | zenity --progress for monitoring
+
+    ( pv -n "$IMG_CHOOSED" | 
+        dd of="$DISK_CHOOSED" oflag=sync bs=1M status=none && 
+        echo "# Finished" ) 2>&1 | 
       zenity --progress \
     --title="Flasher" \
     --text="Flashing $DISK_CHOOSED..." \
@@ -187,19 +195,30 @@ else
 
   choosedisk(){
     echo "Choose a disk to flash"
-    select DISK in /dev/sd[b-z] 
+    
+    unset DISKS
+    declare -a DISKS
+    i=0  
+    lsblk -dn -o NAME,MODEL | while read file  
+    do 
+      let i++
+      DISKS[$i]="$file"
+    done
+  
+    select DISKNAME in $DISKS
     do
+      DISK="/dev/$(echo $DISKNAME | awk '{ print $1; }' )"
 #      DISKSIZE=`parted "$DISK" -ms p | grep "$DISK" | cut -f 2 -d:`
       DISKSIZE=`lsblk "$DISK" -nid -o SIZE`
       echo "You picked $DISK ($DISKSIZE), it is correct? (y/n)"
       read ANS 
-	if [[ $ANS == "y" ]]
-	then
-	  DISK_CHOOSED="$DISK"
-	  break
-	else
-	  return 1
-	fi
+	    if [[ $ANS == "y" ]]
+	    then
+	      DISK_CHOOSED="$DISK"
+	      break
+	    else
+	      return 1
+	    fi
     done
   }
 
