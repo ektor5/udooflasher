@@ -176,13 +176,8 @@ Do you really want to flash it to $DISK_CHOOSED?"
 
   }
   
-
   flash() {
-    #using (pv | dd) | zenity --progress for monitoring
-
-    ( pv -n "$IMG_CHOOSED" | 
-        dd of="$DISK_CHOOSED" oflag=sync bs=1M status=none && 
-        echo "# Finished" ) 2>&1 | 
+    ( pv -n "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M && echo "# Finished" ) 2>&1 | 
       zenity --progress \
     --title="Flasher" \
     --text="Flashing $DISK_CHOOSED..." \
@@ -207,18 +202,17 @@ else
   
     select DISKNAME in $DISKS
     do
-      DISK="/dev/$(echo $DISKNAME | awk '{ print $1; }' )"
 #      DISKSIZE=`parted "$DISK" -ms p | grep "$DISK" | cut -f 2 -d:`
       DISKSIZE=`lsblk "$DISK" -nid -o SIZE`
       echo "You picked $DISK ($DISKSIZE), it is correct? (y/n)"
       read ANS 
-	    if [[ $ANS == "y" ]]
-	    then
-	      DISK_CHOOSED="$DISK"
-	      break
-	    else
-	      return 1
-	    fi
+	if [[ $ANS == "y" ]]
+	then
+	  DISK_CHOOSED="$DISK"
+	  break
+	else
+	  return 1
+	fi
     done
   }
 
@@ -240,7 +234,7 @@ else
   }
 
   flash(){
-     pv "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M status=none && echo "Finished"  2>&1
+     pv "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M && echo "Finished"  2>&1
   }
 
 fi
