@@ -174,7 +174,7 @@ Do you really want to flash it to $DISK_CHOOSED?"
   }
   
   flash() {
-    ( pv -n "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M status=none && echo "# Finished" ) 2>&1 | 
+    ( pv -n "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M && echo "# Finished" ) 2>&1 | 
       zenity --progress \
     --title="Flasher" \
     --text="Flashing $DISK_CHOOSED..." \
@@ -221,7 +221,7 @@ else
   }
 
   flash(){
-     pv "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M status=none && echo "Finished"  2>&1
+     pv "$IMG_CHOOSED" | dd of="$DISK_CHOOSED" oflag=sync bs=1M && echo "Finished"  2>&1
   }
 
 fi
