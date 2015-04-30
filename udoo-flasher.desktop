@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=UDOO Flasher Tool
+Comment=UDOO Flasher Tool (zenity based)
+Exec=gksu udoo-flasher
+Icon=udoo-flasher.png
+StartupNotify=true
+Terminal=false
+Type=Application
+Categories=GNOME;GTK;Application;Settings;System;AdvancedSettings;

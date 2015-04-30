@@ -8,7 +8,7 @@ Package: udoo-flasher
 Version: 0.2
 Maintainer: Ettore Chimenti <ek5.chimenti@gmail.com>
 # Pre-Depends: <comma-separated list of packages>
-Depends: zenity, pv
+Depends: zenity, pv, gksu
 # Recommends: <comma-separated list of packages>
 # Suggests: <comma-separated list of packages>
 # Provides: <comma-separated list of packages>
@@ -18,7 +18,9 @@ Architecture: all
 # Changelog: <changelog file; defaults to a generic changelog>
 # Readme: <README.Debian file; defaults to a generic one>
 # Extra-Files: <comma-separated list of additional files for the doc directory>
-Files: udoo-flasher.sh /usr/bin/
+Files: udoo-flasher /usr/bin/
+  udoo-flasher.desktop /usr/share/applications/
+  udoo-flasher.png /usr/share/pixmaps/
 Description: UDOO Flasher Tool
  This package provides a flasher script that helps to put
  images for the UDOO Board (but also other ones!) into
